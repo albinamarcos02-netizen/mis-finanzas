@@ -404,6 +404,9 @@ select option{background:var(--surface2)}
 <body>
 <div class="app">
 <header>
+   <button class="hamburger-btn" onclick="openMobileNav()">
+    <span></span><span></span><span></span>
+  </button>
   <div class="logo"><div class="logo-icon">💰</div>Mis Finanzas</div>
   <nav>
     <button class="active" onclick="showTab('dashboard',this)">Dashboard</button>
@@ -423,9 +426,6 @@ select option{background:var(--surface2)}
       ↑ Restaurar<input type="file" accept=".json" onchange="loadBackup(event)" style="display:none">
     </label>
   </div>
-  <button class="hamburger-btn" onclick="openMobileNav()">
-    <span></span><span></span><span></span>
-  </button>
   <div class="data-status" id="data-status">
     <div class="data-status-dot" id="data-dot"></div>
     <span id="data-status-text">Conectando...</span>
