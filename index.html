@@ -1051,21 +1051,34 @@ function saveToLocal(){
 /* ── Save to Supabase (debounced 800ms) ── */
 async function pushToCloud(){
   try{
-    setStatus('syncing','Guardando...');
-    const res=await fetch(`${SB_URL}/rest/v1/finanzas_data`,{
-      method:'POST',
-      headers:SB_HEADERS,
-      body:JSON.stringify({id:'main',payload:buildPayload(),updated_at:new Date().toISOString()})
-    });
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    setStatus('connected','☁ Guardado ✓');
-    setTimeout(()=>setStatus('connected','☁ Sincronizado'),2000);
+
+    const res = await fetch(
+      `${SB_URL}/rest/v1/finanzas_data?on_conflict=id`,
+      {
+        method:'POST',
+        headers:{
+          ...SB_HEADERS,
+          'Prefer':'resolution=merge-duplicates'
+        },
+        body:JSON.stringify({
+          id:'main',
+          payload:buildPayload()
+        })
+      }
+    );
+
+    if(!res.ok){
+      throw new Error();
+    }
+
+    console.log('Guardado OK');
+
   }catch(e){
-    console.warn('Supabase save error:',e);
-    setStatus('warning','Sin conexión — guardado local');
+
+    console.log('Error Supabase',e);
+
   }
 }
-
 /* ── Main save: local inmediato + cloud debounced ── */
 function save(){
   saveToLocal();
@@ -2852,7 +2865,7 @@ function mobileNav(id, btn){
   document.getElementById('tr-date').valueAsDate=new Date();
   renderColorPalette();
   renderGoalSwatches();
-}
+
 
 async function init(){
   initUI();
@@ -2899,11 +2912,11 @@ async function init(){
     renderAll();
   }
 }
-
+function initUI(){
+  console.log('UI iniciada');
+}
 init();
-</script>
-</body>
-</html>
+
 </script>
 </body>
 </html>
