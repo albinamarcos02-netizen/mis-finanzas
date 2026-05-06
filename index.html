@@ -337,12 +337,65 @@ select option{background:var(--surface2)}
   header{padding:0 14px}
   main{padding:14px}
   .metrics{grid-template-columns:1fr 1fr}
-  .charts-grid,.inv-charts-grid{grid-template-columns:1fr}
+  .charts-grid,.inv-charts-grid,.annual-grid{grid-template-columns:1fr}
   .form-grid,.form-3{grid-template-columns:1fr}
   .budget-grid,.inst-grid,.cal-months{grid-template-columns:1fr}
+  .goals-grid,.cards-grid,.accounts-grid{grid-template-columns:1fr}
   .metric-value{font-size:19px}
   .add-cat-grid{grid-template-columns:1fr 1fr}
   .add-cat-grid .btn{grid-column:1/-1}
+  .usd-ticker{flex-wrap:wrap;gap:12px}
+  nav,.header-actions{display:none}
+  .hamburger-btn{display:flex}
+}
+@media(min-width:801px){
+  .hamburger-btn{display:none!important}
+  .mobile-nav-overlay{display:none!important}
+}
+.hamburger-btn{
+  background:none;border:none;color:var(--text);cursor:pointer;
+  width:38px;height:38px;border-radius:8px;
+  flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  flex-shrink:0;transition:background .15s;padding:0;
+}
+.hamburger-btn:hover{background:var(--surface2)}
+.hamburger-btn span{width:20px;height:2px;background:var(--text);border-radius:2px;display:block}
+.mobile-nav-overlay{
+  position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,.65);display:flex;
+}
+.mobile-nav-drawer{
+  width:260px;max-width:85vw;background:var(--surface);height:100%;
+  display:flex;flex-direction:column;padding:0;overflow-y:auto;
+  border-right:1px solid var(--border);
+}
+.mobile-nav-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.mobile-nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.mobile-nav-close{background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer;line-height:1;padding:0}
+.mobile-nav-btn{
+  display:flex;align-items:center;gap:13px;
+  padding:14px 18px;background:none;border:none;
+  color:var(--text2);font-family:'Sora',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;text-align:left;width:100%;border-left:3px solid transparent;
+}
+.mobile-nav-btn:hover{background:var(--surface2);color:var(--text)}
+.mobile-nav-btn.active{background:var(--amber-dim);color:var(--amber);border-left-color:var(--amber)}
+.mobile-nav-icon{font-size:17px;width:26px;text-align:center;flex-shrink:0}
+.mobile-nav-divider{height:1px;background:var(--border);margin:8px 0;flex-shrink:0}
+.mobile-nav-action{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;background:none;border:none;
+  color:var(--text3);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .15s;text-align:left;width:100%;
+}
+.mobile-nav-action:hover{color:var(--text);background:var(--surface2)}
+.sync-status-row{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 18px;margin-top:auto;border-top:1px solid var(--border);
+  font-size:11px;color:var(--text3);flex-shrink:0;
 }
 </style>
 </head>
@@ -361,16 +414,49 @@ select option{background:var(--surface2)}
     <button onclick="showTab('metas',this)">Metas</button>
     <button onclick="showTab('categorias',this)">Categorías</button>
   </nav>
-  <button class="btn btn-ghost btn-sm" style="flex-shrink:0;border-color:var(--green);color:var(--green)" onclick="openExportModal()">↓ Exportar</button>
-  <button class="btn btn-ghost btn-sm" style="flex-shrink:0;border-color:var(--blue);color:var(--blue)" onclick="saveBackup()">💾 Backup</button>
-  <label class="btn btn-ghost btn-sm" style="flex-shrink:0;border-color:var(--purple);color:var(--purple);cursor:pointer;margin:0">
-    ↑ Restaurar<input type="file" accept=".json" onchange="loadBackup(event)" style="display:none">
-  </label>
+  <div class="header-actions" style="display:flex;gap:6px;flex-shrink:0">
+    <button class="btn btn-ghost btn-sm" style="border-color:var(--green);color:var(--green)" onclick="openExportModal()">↓ Exportar</button>
+    <button class="btn btn-ghost btn-sm" style="border-color:var(--blue);color:var(--blue)" onclick="saveBackup()">💾 Backup</button>
+    <label class="btn btn-ghost btn-sm" style="border-color:var(--purple);color:var(--purple);cursor:pointer;margin:0">
+      ↑ Restaurar<input type="file" accept=".json" onchange="loadBackup(event)" style="display:none">
+    </label>
+  </div>
+  <button class="hamburger-btn" onclick="openMobileNav()">
+    <span></span><span></span><span></span>
+  </button>
   <div class="data-status" id="data-status">
     <div class="data-status-dot" id="data-dot"></div>
     <span id="data-status-text">Conectando...</span>
   </div>
 </header>
+
+<div class="mobile-nav-overlay" id="mobile-nav-overlay" style="display:none" onclick="closeMobileNavOutside(event)">
+  <div class="mobile-nav-drawer" onclick="event.stopPropagation()">
+    <div class="mobile-nav-header">
+      <div class="mobile-nav-logo"><div class="logo-icon" style="width:26px;height:26px;font-size:13px;border-radius:6px">💰</div>Mis Finanzas</div>
+      <button class="mobile-nav-close" onclick="closeMobileNav()">×</button>
+    </div>
+    <button class="mobile-nav-btn active" id="mnav-dashboard"     onclick="mobileNav('dashboard',this)">    <span class="mobile-nav-icon">📊</span>Dashboard</button>
+    <button class="mobile-nav-btn"        id="mnav-anual"         onclick="mobileNav('anual',this)">        <span class="mobile-nav-icon">📅</span>Anual</button>
+    <button class="mobile-nav-btn"        id="mnav-cuentas"       onclick="mobileNav('cuentas',this)">      <span class="mobile-nav-icon">🏦</span>Cuentas</button>
+    <button class="mobile-nav-btn"        id="mnav-transacciones" onclick="mobileNav('transacciones',this)"><span class="mobile-nav-icon">↕️</span>Transacciones</button>
+    <button class="mobile-nav-btn"        id="mnav-tarjetas"      onclick="mobileNav('tarjetas',this)">     <span class="mobile-nav-icon">💳</span>Tarjetas</button>
+    <button class="mobile-nav-btn"        id="mnav-inversiones"   onclick="mobileNav('inversiones',this)">  <span class="mobile-nav-icon">📈</span>Inversiones</button>
+    <button class="mobile-nav-btn"        id="mnav-presupuesto"   onclick="mobileNav('presupuesto',this)">  <span class="mobile-nav-icon">🎯</span>Presupuesto</button>
+    <button class="mobile-nav-btn"        id="mnav-metas"         onclick="mobileNav('metas',this)">        <span class="mobile-nav-icon">⭐</span>Metas</button>
+    <button class="mobile-nav-btn"        id="mnav-categorias"    onclick="mobileNav('categorias',this)">   <span class="mobile-nav-icon">🏷️</span>Categorías</button>
+    <div class="mobile-nav-divider"></div>
+    <button class="mobile-nav-action" onclick="openExportModal();closeMobileNav()">↓ Exportar Excel</button>
+    <button class="mobile-nav-action" onclick="saveBackup();closeMobileNav()">💾 Backup</button>
+    <label class="mobile-nav-action" style="cursor:pointer">
+      ↑ Restaurar<input type="file" accept=".json" onchange="loadBackup(event);closeMobileNav()" style="display:none">
+    </label>
+    <div class="sync-status-row">
+      <div class="data-status-dot" id="data-dot-mobile"></div>
+      <span id="data-status-text-mobile">Conectando...</span>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -914,8 +1000,13 @@ function applyPayload(data){
 function setStatus(type, text){
   const dot=document.getElementById('data-dot');
   const txt=document.getElementById('data-status-text');
-  if(dot) dot.className='data-status-dot'+(type==='connected'?' connected':type==='syncing'?' syncing':type==='warning'?' warning':'');
+  const dotM=document.getElementById('data-dot-mobile');
+  const txtM=document.getElementById('data-status-text-mobile');
+  const cls='data-status-dot'+(type==='connected'?' connected':type==='syncing'?' syncing':type==='warning'?' warning':'');
+  if(dot) dot.className=cls;
+  if(dotM) dotM.className=cls;
   if(txt) txt.textContent=text;
+  if(txtM) txtM.textContent=text;
 }
 
 /* ── Load from Supabase ── */
@@ -2725,7 +2816,36 @@ function seedData(){
   }
 }
 
-function initUI(){
+/* ═══════════════════════════════════════════════════════════
+   MOBILE NAV
+═══════════════════════════════════════════════════════════ */
+function openMobileNav(){
+  document.getElementById('mobile-nav-overlay').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeMobileNav(){
+  document.getElementById('mobile-nav-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+function closeMobileNavOutside(e){
+  if(e.target===document.getElementById('mobile-nav-overlay')) closeMobileNav();
+}
+function mobileNav(id, btn){
+  // Update mobile nav active state
+  document.querySelectorAll('.mobile-nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Also sync desktop nav
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  const desktopBtn=document.querySelector(`nav button[onclick*="'${id}'"]`);
+  if(desktopBtn) desktopBtn.classList.add('active');
+  // Show tab
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  closeMobileNav();
+  renderAll();
+}
+
+
   document.getElementById('f-date').valueAsDate=new Date();
   document.getElementById('cp-date').valueAsDate=new Date();
   document.getElementById('inv-date').valueAsDate=new Date();
